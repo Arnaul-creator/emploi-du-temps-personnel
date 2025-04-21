@@ -28,6 +28,7 @@
       margin-top: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       font-size: 14px;
+      min-width: 600px;
     }
 
     th, td {
@@ -75,35 +76,26 @@
       flex-wrap: wrap;
       gap: 10px;
     }
-    .dark-mode #astuces div {
-  background-color: #2b2b2b !important;
-  color: #f0f0f0;
-  border: 1px solid #444;
+
+    #table-container {
+      overflow-x: auto;
+      width: 100%;
     }
 
+    .dark-mode #astuces div {
+      background-color: #2b2b2b !important;
+      color: #f0f0f0;
+      border: 1px solid #444;
+    }
 
     @media (max-width: 768px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
+      table {
+        font-size: 12px;
       }
 
-      thead tr {
-        display: none;
-      }
-
-      td {
-        text-align: right;
-        position: relative;
-        padding-left: 50%;
-      }
-
-      td::before {
-        position: absolute;
-        left: 6px;
-        width: 45%;
-        white-space: nowrap;
-        text-align: left;
-        font-weight: bold;
+      input[type="text"] {
+        font-size: 12px;
+        min-width: 80px;
       }
     }
   </style>
@@ -287,6 +279,7 @@
   </script>
 </body>
 </html>
+
 
 
 
