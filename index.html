@@ -48,7 +48,7 @@
       box-sizing: border-box;
     }
 
-    button {
+    button, select {
       margin-top: 10px;
       padding: 10px;
       background-color: var(--header-color);
@@ -75,6 +75,12 @@
       flex-wrap: wrap;
       gap: 10px;
     }
+    .dark-mode #astuces div {
+  background-color: #2b2b2b !important;
+  color: #f0f0f0;
+  border: 1px solid #444;
+    }
+
 
     @media (max-width: 768px) {
       table, thead, tbody, th, td, tr {
@@ -105,6 +111,11 @@
 <body>
   <h1>🗓️ Générateur d'Emploi du Temps</h1>
   <div class="controls">
+    <select id="presetSelector">
+      <option value="">-- Choisir un modèle --</option>
+      <option value="etudiant">Modèle Étudiant</option>
+      <option value="freelance">Modèle Freelance</option>
+    </select>
     <button id="resetBtn">Réinitialiser</button>
     <button id="toggleTheme">Mode Sombre/Clair</button>
     <button id="downloadPDF">Télécharger PDF</button>
@@ -130,27 +141,22 @@
 
   <section id="astuces" style="margin-top: 30px;">
     <h2>💡 Astuces pour mieux organiser son emploi du temps</h2>
-
     <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 15px;">
       <h3>🎯 1. Fixez vos priorités</h3>
       <p>Identifiez les activités les plus importantes (études, travail, repos) et placez-les en premier dans votre emploi du temps.</p>
     </div>
-
     <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-top: 15px;">
       <h3>⏱️ 2. Utilisez la méthode Pomodoro</h3>
       <p>Travaillez 25 minutes, puis faites une pause de 5 minutes. Après 4 sessions, prenez une pause plus longue (15 à 30 min).</p>
     </div>
-
     <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px;">
-      <h3>📅 3. Laissez des moments libres</h3>
+      <h3>🗓️ 3. Laissez des moments libres</h3>
       <p>Ne remplissez pas toutes les heures. Laissez du temps pour les imprévus, les pauses ou la détente.</p>
     </div>
-
     <div style="background: #fce4ec; padding: 15px; border-radius: 8px; margin-top: 15px;">
       <h3>📌 4. Soyez réaliste</h3>
       <p>Ne surchargez pas votre journée. Mieux vaut prévoir moins mais le faire bien.</p>
     </div>
-
     <div style="background: #ede7f6; padding: 15px; border-radius: 8px; margin-top: 15px;">
       <h3>📖 5. Révisez votre emploi du temps chaque semaine</h3>
       <p>Adaptez-le en fonction de votre évolution et des nouvelles priorités.</p>
@@ -161,6 +167,28 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
   <script>
     const tableBody = document.getElementById("table-body");
+    const presetSelector = document.getElementById("presetSelector");
+
+    function saveTableToLocalStorage() {
+      const rows = [];
+      document.querySelectorAll("#table-body tr").forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const rowData = Array.from(inputs).map(input => input.value);
+        rows.push(rowData);
+      });
+      localStorage.setItem("emploiDuTemps", JSON.stringify(rows));
+    }
+
+    function loadTableFromLocalStorage() {
+      const saved = localStorage.getItem("emploiDuTemps");
+      if (saved) {
+        const rows = JSON.parse(saved);
+        tableBody.innerHTML = "";
+        rows.forEach(rowData => createRow(rowData[0], rowData.slice(1)));
+      } else {
+        createRow();
+      }
+    }
 
     function createRow(heure = "", values = ["", "", "", "", "", "", ""]) {
       const tr = document.createElement("tr");
@@ -180,12 +208,34 @@
           }
           const td = input.parentElement;
           td.style.borderWidth = input.value.trim() !== "" ? "2px" : "1px";
+          saveTableToLocalStorage();
         });
       });
     }
 
+    function loadPreset(preset) {
+      tableBody.innerHTML = "";
+      if (preset === "etudiant") {
+        createRow("08h-09h", ["Maths", "", "Histoire", "", "", "", ""]);
+        createRow("09h-10h", ["", "Physique", "", "SVT", "", "", ""]);
+        createRow("10h-11h", ["Anglais", "", "", "", "Sport", "", ""]);
+      } else if (preset === "freelance") {
+        createRow("08h-09h", ["Planification", "", "", "", "", "", ""]);
+        createRow("09h-10h", ["Client A", "Client B", "", "", "", "", ""]);
+        createRow("10h-11h", ["Pause", "", "", "", "Admin", "", ""]);
+      } else {
+        createRow();
+      }
+      saveTableToLocalStorage();
+    }
+
+    presetSelector.addEventListener("change", (e) => {
+      loadPreset(e.target.value);
+    });
+
     document.getElementById('resetBtn').addEventListener('click', function() {
       tableBody.innerHTML = "";
+      localStorage.removeItem("emploiDuTemps");
       createRow();
     });
 
@@ -196,7 +246,6 @@
     document.getElementById('downloadPDF').addEventListener('click', function () {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF('landscape');
-
       doc.setFontSize(18);
       doc.text("🗓️ Emploi du Temps Personnalisé", 14, 20);
 
@@ -208,7 +257,6 @@
       });
 
       const headers = [["Heure", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]];
-
       doc.autoTable({
         head: headers,
         body: rows,
@@ -235,12 +283,11 @@
       doc.save("emploi_du_temps.pdf");
     });
 
-    window.onload = function() {
-      createRow();
-    };
+    window.onload = loadTableFromLocalStorage;
   </script>
 </body>
 </html>
+
 
 
 
