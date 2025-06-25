@@ -243,7 +243,7 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF('landscape');
       doc.setFontSize(18);
-      doc.text("🗓️ Emploi du Temps Personnalisé", 14, 20);
+      doc.text(" Emploi du Temps Personnalisé", 14, 20);
 
       const rows = [];
       document.querySelectorAll("#table-body tr").forEach(row => {
