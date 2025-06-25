@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Générateur d'Emploi du Temps</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/2921/2921222.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg-light: #f9f9f9;
+      --bg-dark: #121212;
+      --text-light: #000;
+      --text-dark: #fff;
+      --header-color: #4CAF50;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 10px;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      font-size: 14px;
+      min-width: 600px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
+      background-color: white;
+      transition: border-width 0.2s;
+    }
+
+    .dark-mode th, .dark-mode td {
+      background-color: #1f1f1f;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+
+    button, select {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: var(--header-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 5px;
+      font-size: 14px;
+    }
+
+    .dark-mode {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .dark-mode table, .dark-mode th, .dark-mode td {
+      border-color: #555;
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    #table-container {
+      overflow-x: auto;
+      width: 100%;
+    }
+
+    .dark-mode #astuces div {
+      background-color: #2b2b2b !important;
+      color: #f0f0f0;
+      border: 1px solid #444;
+    }
+
+    @media (max-width: 768px) {
+      table {
+        font-size: 12px;
+      }
+
+      input[type="text"] {
+        font-size: 12px;
+        min-width: 80px;
+      }
+    }
+
+    .container{
+      background-color: #FBE4D6;
+    }
+  </style>
+</head>
+<body>
+  <h1>🗓️ Générateur d'Emploi du Temps</h1>
+  <div class="controls">
+    <select id="presetSelector">
+      <option value="">-- Choisir un modèle --</option>
+      <option value="etudiant">Modèle Étudiant</option>
+      <option value="freelance">Modèle Freelance</option>
+    </select>
+    <button id="resetBtn">Réinitialiser</button>
+    <button id="toggleTheme">Mode Sombre/Clair</button>
+    <button id="downloadPDF">Télécharger PDF</button>
+  </div>
+
+  <div id="table-container">
+    <table id="edt">
+      <thead>
+        <tr>
+          <th>Heure</th>
+          <th>Lundi</th>
+          <th>Mardi</th>
+          <th>Mercredi</th>
+          <th>Jeudi</th>
+          <th>Vendredi</th>
+          <th>Samedi</th>
+          <th>Dimanche</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <section id="astuces" style="margin-top: 30px;">
+    <h2>💡 Astuces pour mieux organiser son emploi du temps</h2>
+    <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-top: 15px;">
+      <h3>🎯 1. Fixez vos priorités</h3>
+      <p>Identifiez les activités les plus importantes (études, travail, repos) et placez-les en premier dans votre emploi du temps.</p>
+    </div>
+    <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-top: 15px;">
+      <h3>⏱️ 2. Utilisez la méthode Pomodoro</h3>
+      <p>Travaillez 25 minutes, puis faites une pause de 5 minutes. Après 4 sessions, prenez une pause plus longue (15 à 30 min).</p>
+    </div>
+    <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px;">
+      <h3>🗓️ 3. Laissez des moments libres</h3>
+      <p>Ne remplissez pas toutes les heures. Laissez du temps pour les imprévus, les pauses ou la détente.</p>
+    </div>
+    <div style="background: #fce4ec; padding: 15px; border-radius: 8px; margin-top: 15px;">
+      <h3>📌 4. Soyez réaliste</h3>
+      <p>Ne surchargez pas votre journée. Mieux vaut prévoir moins mais le faire bien.</p>
+    </div>
+    <div style="background: #ede7f6; padding: 15px; border-radius: 8px; margin-top: 15px;">
+      <h3>📖 5. Révisez votre emploi du temps chaque semaine</h3>
+      <p>Adaptez-le en fonction de votre évolution et des nouvelles priorités.</p>
+    </div>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    const tableBody = document.getElementById("table-body");
+    const presetSelector = document.getElementById("presetSelector");
+
+    function saveTableToLocalStorage() {
+      const rows = [];
+      document.querySelectorAll("#table-body tr").forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const rowData = Array.from(inputs).map(input => input.value);
+        rows.push(rowData);
+      });
+      localStorage.setItem("emploiDuTemps", JSON.stringify(rows));
+    }
+
+    function loadTableFromLocalStorage() {
+      const saved = localStorage.getItem("emploiDuTemps");
+      if (saved) {
+        const rows = JSON.parse(saved);
+        tableBody.innerHTML = "";
+        rows.forEach(rowData => createRow(rowData[0], rowData.slice(1)));
+      } else {
+        createRow();
+      }
+    }
+
+    function createRow(heure = "", values = ["", "", "", "", "", "", ""]) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td><input type="text" class="heure" value="${heure}" placeholder="08h-09h"></td>` +
+        values.map(val => `<td><input type="text" class="edt-cell" value="${val}" placeholder="Mat/Act"></td>`).join('');
+      tableBody.appendChild(tr);
+      attachAutoGrow(tr);
+    }
+
+    function attachAutoGrow(row) {
+      const inputs = row.querySelectorAll("input");
+      inputs.forEach(input => {
+        input.addEventListener("input", () => {
+          const filled = Array.from(inputs).some(cell => cell.value.trim() !== "");
+          if (filled && tableBody.lastElementChild === row) {
+            createRow();
+          }
+          const td = input.parentElement;
+          td.style.borderWidth = input.value.trim() !== "" ? "2px" : "1px";
+          saveTableToLocalStorage();
+        });
+      });
+    }
+
+    function loadPreset(preset) {
+      tableBody.innerHTML = "";
+      if (preset === "etudiant") {
+        createRow("08h-09h", ["Maths", "", "Histoire", "", "", "", ""]);
+        createRow("09h-10h", ["", "Physique", "", "SVT", "", "", ""]);
+        createRow("10h-11h", ["Anglais", "", "", "", "Sport", "", ""]);
+      } else if (preset === "freelance") {
+        createRow("08h-09h", ["Planification", "", "", "", "", "", ""]);
+        createRow("09h-10h", ["Client A", "Client B", "", "", "", "", ""]);
+        createRow("10h-11h", ["Pause", "", "", "", "Admin", "", ""]);
+      } else {
+        createRow();
+      }
+      saveTableToLocalStorage();
+    }
+
+    presetSelector.addEventListener("change", (e) => {
+      loadPreset(e.target.value);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', function() {
+      tableBody.innerHTML = "";
+      localStorage.removeItem("emploiDuTemps");
+      createRow();
+    });
+
+    document.getElementById('toggleTheme').addEventListener('click', function() {
+      document.body.classList.toggle('dark-mode');
+    });
+
+    document.getElementById('downloadPDF').addEventListener('click', function () {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('landscape');
+      doc.setFontSize(18);
+      doc.text("🗓️ Emploi du Temps Personnalisé", 14, 20);
+
+      const rows = [];
+      document.querySelectorAll("#table-body tr").forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const rowData = Array.from(inputs).map(input => input.value || " ");
+        rows.push(rowData);
+      });
+
+      const headers = [["Heure", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]];
+      doc.autoTable({
+        head: headers,
+        body: rows,
+        startY: 30,
+        styles: {
+          halign: 'center',
+          valign: 'middle',
+          lineWidth: 0.5,
+          lineColor: [0, 0, 0],
+          fontSize: 10,
+        },
+        headStyles: {
+          fillColor: [76, 175, 80],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        },
+        tableLineColor: [0, 0, 0],
+        tableLineWidth: 0.5
+      });
+
+      doc.save("emploi_du_temps.pdf");
+    });
+
+    window.onload = loadTableFromLocalStorage;
+  </script>
+  <hr>
+<div class="container">
+  <footer class="py-3 my-4">
+    <ul class="nav justify-content-center border-bottom pb-3 mb-3">
+      <li class="nav-item"><a href="./confidentialite.html">Politique de confidentialite</a></li>
+      <li class="nav-item"><a href="./Mention-legal.html">Mention-legal</a>
+      <li class="nav-item"><a href="mailto:arnaulamevor79@email.com">Me contacter</a>
+      </li>
+     
+    </ul>
+    <p class="text-center text-body-secondary">© emploi_du_temps <p>
+  </footer>
+</div>
+
+</body>
+</html>
+
+
